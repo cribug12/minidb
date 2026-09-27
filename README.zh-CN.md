@@ -109,6 +109,19 @@ Trace 报告会记录 planning/executor 耗时、实际行数、稳定的 plan n
 
 ![MiniDB Trace Viewer](imgs/analysis.png)
 
+### 直接查看数据文件
+
+`tools/minidb_dump.py` 不链接引擎、直接按磁盘格式解码数据目录：`catalog.mdbc`、每个 `tables/<id>.heap` 页（页头、行指针、MVCC 元组头与各列值）、每个 `indexes/<id>.btree` 节点（从根到叶的树结构，外加有序叶子链，并把每个 `RecordId` 反查回堆中的行），另外可选解析 `minidb.control`、`wal/txn_status.log` 与 `wal/wal.log`。
+
+```bash
+python3 tools/minidb_dump.py minidb_data                     # 整个目录
+python3 tools/minidb_dump.py minidb_data --summary           # 只看页头
+python3 tools/minidb_dump.py minidb_data --table users --max-entries 0
+python3 tools/minidb_dump.py minidb_data --no-heap --wal     # 还没落盘的写入
+```
+
+适合排查堆/索引损坏、"表存在但查询结果对不上"，或确认 checkpoint 到底写了什么。它也会把两个坑暴露出来：堆文件只反映最后一次 checkpoint 或正常退出（最新写入还在 WAL 里）；被更新/删除的行，字节会留在页内直到空间被复用——请以行指针为准，不要相信 `strings`。
+
 ### 并发与 Server
 
 表/记录/键锁、DDL 锁、死锁检测；连接/查询/写查询/事务准入；TCP Server、预编译、服务端游标。
@@ -360,6 +373,7 @@ python3 tests/acid/durability/crash_recovery_harness.py ./build/minidb --seed 12
 | [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | 已知限制 |
 | [CAPABILITY_GAP_CHECKLIST.md](docs/CAPABILITY_GAP_CHECKLIST.md) | 文档与实现对照 |
 | [ACID_TODO.md](docs/ACID_TODO.md) | ACID 测试矩阵 |
+| [ARCH_DEEP_DIVE.zh.md](docs/ARCH_DEEP_DIVE.zh.md) | 深度带读：执行/存储/事务·WAL 层与差异清单 |
 
 ## 架构
 

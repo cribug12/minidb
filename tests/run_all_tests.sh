@@ -115,6 +115,7 @@ if [[ "$STRESS" == "1" ]]; then stress_flag="--stress"; fi
 run_test "sql_matrix"     "python3 tests/sql/sql_correctness_matrix.py $BIN --seed $SEED $stress_flag"
 run_test "sqlite_diff"    "python3 tests/sql/differential_sqlite.py $BIN --seed $((SEED + 1)) $stress_flag"
 run_test "crash_harness"  "python3 tests/acid/durability/crash_recovery_harness.py $BIN --seed $((SEED + 2)) $stress_flag"
+run_test "hot_update_meta" "python3 tests/acid/durability/hot_update_metadata_restart.py $BIN --seed $((SEED + 4))"
 run_test "mvcc_lock"      "python3 tests/acid/isolation/mvcc_lock_regression.py $BIN --seed $((SEED + 3)) $stress_flag"
 
 if [[ "$SUITE" == "pr" && "$STRESS" != "1" ]]; then

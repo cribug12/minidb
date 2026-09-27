@@ -96,6 +96,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::insert_tuple(const byte* data, u16 lengt
                 pool_->mark_dirty(last_pid);
             }
             pool_->unpin_page(last_pid);
+            // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+            if (!meta_loaded_) ensure_meta_loaded();
             meta_.num_tuples++;
             note_meta_changed();
             return Pair<PageId, SlotIdx>(last_pid, slot);
@@ -140,6 +142,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::insert_tuple(const byte* data, u16 lengt
 
     meta_.last_data_page_id = new_pid;
     meta_.num_data_pages++;
+    // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+    if (!meta_loaded_) ensure_meta_loaded();
     meta_.num_tuples++;
     note_meta_changed();
 
@@ -293,6 +297,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::InsertReservation::commit(
         h->meta_.last_data_page_id = page_id_;
         if (h->meta_.first_data_page_id == kNullPageId) h->meta_.first_data_page_id = page_id_;
         h->meta_.num_data_pages++;
+        // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+        if (!h->meta_loaded_) h->ensure_meta_loaded();
         h->meta_.num_tuples++;
         h->note_meta_changed();
 
@@ -327,6 +333,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::InsertReservation::commit(
     // Any INSERT invalidates the page's all-visible status.
     h->vm_.clear_page(page_id_);
 
+    // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+    if (!h->meta_loaded_) h->ensure_meta_loaded();
     h->meta_.num_tuples++;
     h->note_meta_changed();
     return Pair<PageId, SlotIdx>(page_id_, slot);
@@ -440,6 +448,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::InPageReservation::commit(
     h->pool_->mark_dirty(page_id_);
     h->pool_->unpin_page(page_id_);
 
+    // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+    if (!h->meta_loaded_) h->ensure_meta_loaded();
     h->meta_.num_tuples++;
     h->note_meta_changed();
     return Pair<PageId, SlotIdx>(page_id_, actual_slot);
@@ -477,6 +487,8 @@ Result<Pair<PageId, SlotIdx>> HeapFile::insert_tuple_in_page(PageId page_id,
     pool_->mark_dirty(page_id);
     pool_->unpin_page(page_id);
 
+    // meta_ is loaded lazily; mutating it before load_meta() persists a zeroed HeapMeta.
+    if (!meta_loaded_) ensure_meta_loaded();
     meta_.num_tuples++;
     note_meta_changed();
     return Pair<PageId, SlotIdx>(page_id, slot);

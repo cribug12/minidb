@@ -173,6 +173,8 @@ add_test(NAME ddl_wal
     COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/acid/durability/ddl_wal.py $<TARGET_FILE:minidb> --seed 12648449)
 add_test(NAME crash_recovery_harness
     COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/acid/durability/crash_recovery_harness.py $<TARGET_FILE:minidb> --seed 12648432)
+add_test(NAME hot_update_metadata_restart
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/acid/durability/hot_update_metadata_restart.py $<TARGET_FILE:minidb> --seed 12648468)
 add_test(NAME ddl_crash_recovery
     COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/acid/durability/ddl_crash_recovery.py $<TARGET_FILE:minidb> --seed 12648457)
 

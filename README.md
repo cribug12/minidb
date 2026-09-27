@@ -141,6 +141,19 @@ Open `tools/trace_viewer.html` in a browser, paste or load the JSON report, and 
 
 ![MiniDB Trace Viewer](imgs/analysis.png)
 
+### Inspecting Data Files
+
+`tools/minidb_dump.py` decodes a data directory straight from its files without linking the engine: `catalog.mdbc`, every `tables/<id>.heap` page (page headers, line pointers, MVCC tuple headers and column values), every `indexes/<id>.btree` node (root-to-leaf structure plus the sorted leaf chain, resolving each `RecordId` back to its heap row), and optionally `minidb.control`, `wal/txn_status.log` and `wal/wal.log`.
+
+```bash
+python3 tools/minidb_dump.py minidb_data                     # whole directory
+python3 tools/minidb_dump.py minidb_data --summary           # page headers only
+python3 tools/minidb_dump.py minidb_data --table users --max-entries 0
+python3 tools/minidb_dump.py minidb_data --no-heap --wal     # writes not yet flushed
+```
+
+Handy when a heap or index looks corrupt, when a table exists but queries disagree, or to confirm what a checkpoint actually wrote. It also makes two traps visible: heap files only reflect the last checkpoint or clean shutdown (recent writes still live in the WAL), and updated or deleted rows keep their bytes in the page until the space is reused — trust the line pointers, not `strings`.
+
 ### Concurrency And Server
 
 - Table/record/key locks; DDL locks; wait-for graph deadlock detection.
@@ -395,6 +408,7 @@ python3 tests/acid/durability/crash_recovery_harness.py ./build/minidb --seed 12
 | [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | Explicit non-goals and gaps |
 | [CAPABILITY_GAP_CHECKLIST.md](docs/CAPABILITY_GAP_CHECKLIST.md) | README claims vs code |
 | [ACID_TODO.md](docs/ACID_TODO.md) | ACID test matrix status |
+| [ARCH_DEEP_DIVE.zh.md](docs/ARCH_DEEP_DIVE.zh.md) | 中文深度带读：执行/存储/事务·WAL 层，含文档与代码差异清单 |
 
 ## Architecture
 
